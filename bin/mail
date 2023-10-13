@@ -1,0 +1,112 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'io/console' # noecho
+require 'logger'
+require 'logger/colors'
+require 'mail'
+require 'net/imap'
+require 'optparse'
+
+options = {}
+option_parser = OptionParser.new do |opt|
+  opt.on('-s', '--server SERVER')
+  opt.on('-u', '--username USERNAME')
+  opt.on('-p', '--password PASSWORD')
+  opt.on('-P', '--prompt')
+  opt.on('-l', '--list')
+  opt.on('-m', '--mailbox MAILBOX')
+end
+option_parser.parse!(into: options)
+
+unless %i[server username].all? { |o| options.key?(o) } &&
+       %i[password prompt].any? { |o| options.key?(o) } &&
+       %i[list mailbox].any? { |o| options.key?(o) }
+  puts option_parser.help
+  exit 1
+end
+
+logger = Logger.new($stdout, progname: __FILE__, level: Logger::DEBUG)
+
+imap_server = options[:server]
+username = options[:username]
+
+if options[:prompt]
+  print 'Enter password: '
+  password = $stdin.noecho(&:gets).chomp
+  puts
+else
+  password = options[:password]
+end
+
+imap = Net::IMAP.new(imap_server, ssl: true)
+
+unless imap.auth_capable?('PLAIN')
+  logger.error "server doesn't support PLAIN authentication"
+  exit 1
+end
+
+imap.authenticate('PLAIN', username, password)
+
+if options[:list]
+  imap.list('', '*').each do |mailbox|
+    puts mailbox.name
+  end
+  exit 0
+end
+
+unless options[:mailbox]
+  logger.error 'no mailbox specified'
+  exit 1
+end
+
+mailbox = options[:mailbox]
+imap.examine(mailbox)
+
+Dir.mkdir(mailbox) unless File.directory?(mailbox)
+
+imap.search('ALL').each do |message_id|
+  logger.info "processing message #{message_id}"
+  fetch_data = imap.fetch(message_id, %w[UID RFC822])
+
+  body = fetch_data[0].attr['RFC822']
+  mail = Mail.read_from_string(body)
+  time = mail.date
+  subject = if mail.subject.nil? || mail.subject.empty?
+              '(no subject)'
+            else
+              mail.subject.gsub(%r{[<>:"/\\|?*]}, '_').strip
+            end
+
+  message_dir_name = "#{time.strftime('%Y-%m-%dT%H-%M-%S')} #{subject}"
+  path = "#{mailbox}/#{message_dir_name}"
+  Dir.mkdir(path) unless File.directory?(path)
+
+  uid = fetch_data[0].attr['UID']
+
+  logger.info "saving message UID #{uid}"
+  File.write("#{path}/#{uid}.eml", body)
+
+  if mail.multipart?
+    mail.parts.each_with_index do |part, index|
+      if part.content_disposition == 'inline'
+        logger.info 'saving inline part'
+        File.write("#{path}/#{uid}-#{index}.asc", part.body.decoded)
+      end
+    end
+  else
+    logger.info 'saving plaintext'
+    File.write("#{path}/#{uid}.asc", mail.body.decoded)
+  end
+
+  next unless mail.has_attachments?
+
+  mail.attachments.each do |attachment|
+    logger.info "saving attachment: #{attachment.filename}"
+    File.binwrite("#{path}/#{attachment.filename}",
+                  attachment.body.decoded)
+  end
+end
+
+imap.logout
+imap.disconnect
