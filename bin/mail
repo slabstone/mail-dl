@@ -31,7 +31,9 @@ logger = Logger.new($stdout, progname: __FILE__, level: Logger::DEBUG)
 imap_server = options[:server]
 username = options[:username]
 
-if options[:prompt]
+if ENV['MAIL_DL_PASSWORD']
+  password = ENV['MAIL_DL_PASSWORD']
+elsif options[:prompt]
   print 'Enter password: '
   password = $stdin.noecho(&:gets).chomp
   puts
