@@ -65,7 +65,7 @@ end
 mailbox = options[:mailbox]
 imap.examine(mailbox)
 
-Dir.mkdir(mailbox) unless File.directory?(mailbox)
+Dir.mkdir(mailbox)
 
 imap.search('ALL').each do |message_id|
   logger.info "processing message #{message_id}"
@@ -82,7 +82,7 @@ imap.search('ALL').each do |message_id|
 
   message_dir_name = "#{time.strftime('%Y-%m-%dT%H-%M-%S')} #{subject}"
   path = "#{mailbox}/#{message_dir_name}"
-  Dir.mkdir(path) unless File.directory?(path)
+  Dir.mkdir(path)
 
   uid = fetch_data[0].attr['UID']
 
