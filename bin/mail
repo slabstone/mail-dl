@@ -26,6 +26,7 @@ unless %i[server username].all? { |o| options.key?(o) } &&
   exit 1
 end
 
+$stdout.sync = true
 logger = Logger.new($stdout, progname: __FILE__, level: Logger::DEBUG)
 
 imap_server = options[:server]
