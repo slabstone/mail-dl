@@ -85,7 +85,15 @@ imap.search('ALL').each do |message_id|
 
   message_dir_name = "#{time.strftime('%Y-%m-%dT%H-%M-%S')} #{uid} #{subject}"
   path = "#{mailbox}/#{message_dir_name}"
-  Dir.mkdir(path)
+
+  begin
+    Dir.mkdir(path)
+  rescue Errno::ENAMETOOLONG
+    logger.warn "subject too long, creating dir without subject: #{subject}"
+    message_dir_name = "#{time.strftime('%Y-%m-%dT%H-%M-%S')} #{uid}"
+    path = "#{mailbox}/#{message_dir_name}"
+    Dir.mkdir(path)
+  end
 
   logger.info "saving message UID #{uid}"
   File.write("#{path}/#{uid}.eml", body)
