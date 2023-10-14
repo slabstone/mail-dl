@@ -81,11 +81,11 @@ imap.search('ALL').each do |message_id|
               mail.subject.gsub(%r{[<>:"/\\|?*]}, '_').strip
             end
 
-  message_dir_name = "#{time.strftime('%Y-%m-%dT%H-%M-%S')} #{subject}"
+  uid = fetch_data[0].attr['UID']
+
+  message_dir_name = "#{time.strftime('%Y-%m-%dT%H-%M-%S')} #{uid} #{subject}"
   path = "#{mailbox}/#{message_dir_name}"
   Dir.mkdir(path)
-
-  uid = fetch_data[0].attr['UID']
 
   logger.info "saving message UID #{uid}"
   File.write("#{path}/#{uid}.eml", body)
