@@ -20,6 +20,7 @@ option_parser = OptionParser.new do |opt|
   opt.on('-P', '--prompt')
   opt.on('-l', '--list')
   opt.on('-m', '--mailbox MAILBOX')
+  opt.on('-f', '--from FROM')
 end
 option_parser.parse!(into: options)
 
@@ -76,7 +77,13 @@ mailbox = decode_mailbox_name(mailbox)
 
 FileUtils.mkdir_p(mailbox)
 
-imap.search('ALL').each do |message_id|
+search_keys = if options[:from]
+                ['FROM', options[:from]]
+              else
+                ['ALL']
+              end
+
+imap.search(search_keys).each do |message_id|
   logger.info "processing message #{message_id}"
   fetch_data = imap.fetch(message_id, %w[UID RFC822])
 
