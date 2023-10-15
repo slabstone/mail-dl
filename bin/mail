@@ -107,14 +107,15 @@ imap.search('ALL').each do |message_id|
 
   if mail.multipart?
     mail.parts.each_with_index do |part, index|
-      if part.content_disposition == 'inline'
-        logger.info 'saving inline part'
-        File.write("#{path}/#{uid}-#{index}.asc", part.body.decoded)
-      end
+      next unless part.content_disposition == 'inline' ||
+                  part.content_type.include?('text/plain')
+
+      logger.info 'saving inline/plaintext part'
+      File.write("#{path}/#{uid}-#{index}.txt", part.body.decoded)
     end
   else
     logger.info 'saving plaintext'
-    File.write("#{path}/#{uid}.asc", mail.body.decoded)
+    File.write("#{path}/#{uid}.txt", mail.body.decoded)
   end
 
   next unless mail.has_attachments?
