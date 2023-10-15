@@ -9,6 +9,7 @@ require 'mail'
 require 'net/imap'
 require 'optparse'
 
+require_relative '../lib/file'
 require_relative '../lib/mailbox'
 
 options = {}
@@ -85,7 +86,7 @@ imap.search('ALL').each do |message_id|
   subject = if mail.subject.nil? || mail.subject.empty?
               '(no subject)'
             else
-              mail.subject.gsub(%r{[<>:"/\\|?*]}, '_').strip
+              sanitize_filename(mail.subject)
             end
 
   uid = fetch_data[0].attr['UID']
@@ -122,7 +123,7 @@ imap.search('ALL').each do |message_id|
 
   mail.attachments.each do |attachment|
     logger.info "saving attachment: #{attachment.filename}"
-    File.binwrite("#{path}/#{attachment.filename}",
+    File.binwrite("#{path}/#{sanitize_filename(attachment.filename)}",
                   attachment.body.decoded)
   end
 end
