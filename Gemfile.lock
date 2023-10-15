@@ -4,6 +4,7 @@ GEM
     ast (2.4.2)
     base64 (0.1.1)
     date (3.3.3)
+    fileutils (1.7.0)
     iconv (1.0.8)
     json (2.6.3)
     language_server-protocol (3.17.0.3)
@@ -55,6 +56,7 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
+  fileutils (~> 1.7)
   iconv (~> 1.0)
   logger (~> 1.5)
   logger-colors (~> 1.0)

@@ -4,6 +4,7 @@ source 'https://rubygems.org'
 
 ruby File.read('.ruby-version').strip
 
+gem 'fileutils', '~> 1.7'
 gem 'iconv', '~> 1.0'
 gem 'logger', '~> 1.5'
 gem 'logger-colors', '~> 1.0'

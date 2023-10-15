@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require 'fileutils'
 require 'io/console' # noecho
 require 'logger'
 require 'logger/colors'
@@ -72,7 +73,7 @@ imap.examine(mailbox)
 
 mailbox = decode_mailbox_name(mailbox)
 
-Dir.mkdir(mailbox)
+FileUtils.mkdir_p(mailbox)
 
 imap.search('ALL').each do |message_id|
   logger.info "processing message #{message_id}"
