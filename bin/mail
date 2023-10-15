@@ -8,6 +8,8 @@ require 'mail'
 require 'net/imap'
 require 'optparse'
 
+require_relative '../lib/mailbox'
+
 options = {}
 option_parser = OptionParser.new do |opt|
   opt.on('-s', '--server SERVER')
@@ -53,7 +55,9 @@ imap.authenticate('PLAIN', username, password)
 
 if options[:list]
   imap.list('', '*').each do |mailbox|
-    puts mailbox.name
+    puts "#{mailbox.name}#{if decode_mailbox_name(mailbox.name) != mailbox.name
+                             " (#{decode_mailbox_name(mailbox.name)})"
+                           end}"
   end
   exit 0
 end
@@ -65,6 +69,8 @@ end
 
 mailbox = options[:mailbox]
 imap.examine(mailbox)
+
+mailbox = decode_mailbox_name(mailbox)
 
 Dir.mkdir(mailbox)
 
